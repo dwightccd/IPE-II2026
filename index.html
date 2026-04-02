@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPE II // Tests</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg: #0a0e13;
+    --surface: #0f1520;
+    --surface2: #151d2e;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7b61ff;
+    --green: #00ff88;
+    --red: #ff4466;
+    --yellow: #ffcc00;
+    --text: #c8d8f0;
+    --text-dim: #5a7a9a;
+    --text-bright: #e8f4ff;
+    --glow: 0 0 20px rgba(0,212,255,0.15);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none; z-index:0;
+  }
+
+  .wrap { position:relative; z-index:1; max-width:860px; margin:0 auto; padding:20px; }
+
+  /* HEADER */
+  header {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .logo-line {
+    display:flex; align-items:center; gap:12px; margin-bottom:8px;
+  }
+  .logo-bracket { color:var(--accent); font-size:1.4rem; font-weight:700; }
+  .logo-title { color:var(--text-bright); font-size:1.5rem; font-weight:700; letter-spacing:2px; }
+  .logo-sep { color:var(--border); }
+  .logo-sub { color:var(--text-dim); font-size:0.75rem; letter-spacing:3px; text-transform:uppercase; }
+  .header-desc { color:var(--text-dim); font-size:0.8rem; margin-top:6px; }
+
+  /* MODULE GRID */
+  #module-screen { animation: fadeIn 0.3s ease; }
+  .module-grid {
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:12px;
+  }
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .module-card::before {
+    content:'';
+    position:absolute; left:0; top:0; bottom:0; width:3px;
+    background: var(--accent);
+    transform: scaleY(0); transform-origin: bottom;
+    transition: transform 0.2s ease;
+  }
+  .module-card:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+    transform: translateY(-2px);
+    box-shadow: var(--glow);
+  }
+  .module-card:hover::before { transform: scaleY(1); }
+  .module-num {
+    font-size:0.7rem; color:var(--accent); letter-spacing:2px;
+    margin-bottom:8px; font-weight:600;
+  }
+  .module-name {
+    font-size:0.9rem; color:var(--text-bright); font-weight:600;
+    line-height:1.4; margin-bottom:10px;
+  }
+  .module-count {
+    font-size:0.72rem; color:var(--text-dim);
+  }
+  .module-bar {
+    height:2px; background:var(--border); border-radius:2px;
+    margin-top:10px; overflow:hidden;
+  }
+  .module-bar-fill { height:100%; background:var(--accent); width:100%; }
+
+  /* ALL MODULES BUTTON */
+  .all-btn {
+    display:block; width:100%; margin-top:16px;
+    background: linear-gradient(135deg, var(--surface), var(--surface2));
+    border: 1px solid var(--accent2);
+    border-radius:6px; padding:16px 20px;
+    color:var(--text-bright); font-family:inherit; font-size:0.85rem;
+    font-weight:700; letter-spacing:2px; cursor:pointer;
+    transition:all 0.2s; text-transform:uppercase;
+  }
+  .all-btn:hover {
+    background: rgba(123,97,255,0.15);
+    box-shadow: 0 0 20px rgba(123,97,255,0.2);
+  }
+
+  /* QUIZ SCREEN */
+  #quiz-screen { display:none; animation: fadeIn 0.3s ease; }
+
+  .quiz-header {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:20px; flex-wrap:wrap; gap:10px;
+  }
+  .quiz-module-tag {
+    font-size:0.72rem; color:var(--accent); letter-spacing:2px;
+    text-transform:uppercase; font-weight:600;
+  }
+  .quiz-stats {
+    display:flex; gap:16px; font-size:0.75rem;
+  }
+  .stat { color:var(--text-dim); }
+  .stat span { color:var(--text-bright); font-weight:600; }
+  .stat .ok { color:var(--green); }
+  .stat .ko { color:var(--red); }
+
+  /* Progress bar */
+  .progress-wrap {
+    background:var(--border); height:3px; border-radius:3px;
+    margin-bottom:24px; overflow:hidden;
+  }
+  .progress-bar {
+    height:100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius:3px; transition: width 0.4s ease;
+  }
+
+  /* Question card */
+  .q-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:28px; margin-bottom:16px;
+  }
+  .q-num {
+    font-size:0.7rem; color:var(--text-dim); letter-spacing:2px;
+    margin-bottom:14px;
+  }
+  .q-type-badge {
+    display:inline-block; font-size:0.62rem; padding:2px 8px;
+    border-radius:3px; margin-bottom:12px; font-weight:600; letter-spacing:1px;
+  }
+  .badge-tf { background:rgba(0,212,255,0.1); color:var(--accent); border:1px solid rgba(0,212,255,0.2); }
+  .badge-mc { background:rgba(123,97,255,0.1); color:var(--accent2); border:1px solid rgba(123,97,255,0.2); }
+  .q-text {
+    font-size:0.95rem; color:var(--text-bright); line-height:1.65;
+    margin-bottom:24px; font-weight:600;
+  }
+
+  /* Options */
+  .options { display:flex; flex-direction:column; gap:10px; }
+  .opt {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:5px; padding:13px 16px;
+    cursor:pointer; transition:all 0.15s ease;
+    font-family:inherit; font-size:0.85rem; color:var(--text);
+    text-align:left; display:flex; align-items:center; gap:12px;
+  }
+  .opt:hover:not(:disabled) {
+    border-color:var(--accent); color:var(--text-bright);
+    background:rgba(0,212,255,0.05);
+  }
+  .opt-key {
+    min-width:22px; height:22px; border-radius:3px;
+    background:var(--border); color:var(--text-dim);
+    font-size:0.7rem; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.15s;
+  }
+  .opt.correct { border-color:var(--green); background:rgba(0,255,136,0.08); color:var(--green); }
+  .opt.correct .opt-key { background:var(--green); color:var(--bg); }
+  .opt.wrong { border-color:var(--red); background:rgba(255,68,102,0.08); color:var(--red); }
+  .opt.wrong .opt-key { background:var(--red); color:white; }
+  .opt.reveal-correct { border-color:var(--green); background:rgba(0,255,136,0.05); color:var(--green); }
+  .opt:disabled { cursor:default; }
+
+  /* Feedback */
+  .feedback {
+    margin-top:16px; padding:14px 16px;
+    border-radius:5px; font-size:0.82rem; line-height:1.5;
+    display:none;
+  }
+  .feedback.show { display:block; }
+  .feedback.ok { background:rgba(0,255,136,0.08); border:1px solid rgba(0,255,136,0.25); color:var(--green); }
+  .feedback.ko { background:rgba(255,68,102,0.08); border:1px solid rgba(255,68,102,0.25); color:var(--red); }
+
+  /* Nav */
+  .quiz-nav {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:20px; flex-wrap:wrap; gap:10px;
+  }
+  .btn-nav {
+    background:var(--surface); border:1px solid var(--border);
+    color:var(--text); font-family:inherit; font-size:0.8rem;
+    padding:10px 20px; border-radius:5px; cursor:pointer;
+    transition:all 0.2s; letter-spacing:1px; font-weight:600;
+  }
+  .btn-nav:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-nav.primary {
+    border-color:var(--accent); color:var(--accent);
+    background:rgba(0,212,255,0.05);
+  }
+  .btn-nav.primary:hover {
+    background:rgba(0,212,255,0.15);
+    box-shadow: var(--glow);
+  }
+  .btn-nav:disabled { opacity:0.3; cursor:default; }
+
+  /* RESULTS SCREEN */
+  #results-screen { display:none; animation: fadeIn 0.3s ease; }
+  .results-box {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:36px; text-align:center;
+    margin-bottom:24px;
+  }
+  .results-title {
+    font-size:0.75rem; letter-spacing:3px; color:var(--text-dim);
+    text-transform:uppercase; margin-bottom:16px;
+  }
+  .results-score {
+    font-size:3.5rem; font-weight:700; margin-bottom:8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .results-fraction { font-size:1rem; color:var(--text-dim); margin-bottom:24px; }
+  .results-grid {
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;
+  }
+  .result-stat {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:5px; padding:14px;
+  }
+  .result-stat-val {
+    font-size:1.5rem; font-weight:700; display:block; margin-bottom:4px;
+  }
+  .result-stat-lbl { font-size:0.7rem; color:var(--text-dim); letter-spacing:1px; }
+  .v-green { color:var(--green); }
+  .v-red { color:var(--red); }
+  .v-yellow { color:var(--yellow); }
+
+  /* Review section */
+  .review-title {
+    font-size:0.7rem; color:var(--red); letter-spacing:2px;
+    text-transform:uppercase; margin-bottom:14px; font-weight:700;
+  }
+  .review-item {
+    background:var(--surface); border:1px solid rgba(255,68,102,0.2);
+    border-radius:6px; padding:18px; margin-bottom:10px;
+  }
+  .review-q { font-size:0.85rem; color:var(--text-bright); margin-bottom:10px; line-height:1.5; }
+  .review-row { font-size:0.78rem; margin-bottom:4px; }
+  .review-row .lbl { color:var(--text-dim); }
+  .review-correct { color:var(--green); }
+  .review-wrong { color:var(--red); }
+
+  .results-actions { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:24px; }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--text-dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo-line">
+      <span class="logo-bracket">[</span>
+      <span class="logo-title">IPE II</span>
+      <span class="logo-sep">//</span>
+      <span style="color:var(--text-dim);font-size:0.95rem;letter-spacing:2px;">TESTS</span>
+      <span class="logo-bracket">]</span>
+    </div>
+    <div class="logo-sub">Iniciativa y Participación Empresarial II &mdash; Autoevaluación</div>
+    <div class="header-desc">Selecciona un módulo para comenzar. Las preguntas se presentan en orden aleatorio.</div>
+  </header>
+
+  <!-- MODULE SELECTION -->
+  <div id="module-screen">
+    <div class="module-grid" id="module-grid"></div>
+    <button class="all-btn" onclick="startQuiz('ALL')">▶ Examen completo — todos los módulos</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz-screen">
+    <div class="quiz-header">
+      <div class="quiz-module-tag" id="quiz-module-tag"></div>
+      <div class="quiz-stats">
+        <div class="stat">Pregunta <span id="stat-current">1</span> / <span id="stat-total">10</span></div>
+        <div class="stat">✓ <span class="ok" id="stat-ok">0</span></div>
+        <div class="stat">✗ <span class="ko" id="stat-ko">0</span></div>
+      </div>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    <div id="q-container"></div>
+    <div class="quiz-nav">
+      <button class="btn-nav" onclick="backToModules()">← Módulos</button>
+      <button class="btn-nav primary" id="btn-next" onclick="nextQuestion()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results-screen">
+    <div class="results-box">
+      <div class="results-title">Resultado final</div>
+      <div class="results-score" id="res-pct"></div>
+      <div class="results-fraction" id="res-frac"></div>
+      <div class="results-grid">
+        <div class="result-stat">
+          <span class="result-stat-val v-green" id="res-ok">0</span>
+          <span class="result-stat-lbl">CORRECTAS</span>
+        </div>
+        <div class="result-stat">
+          <span class="result-stat-val v-red" id="res-ko">0</span>
+          <span class="result-stat-lbl">INCORRECTAS</span>
+        </div>
+        <div class="result-stat">
+          <span class="result-stat-val v-yellow" id="res-total">0</span>
+          <span class="result-stat-lbl">TOTAL</span>
+        </div>
+      </div>
+    </div>
+    <div id="review-container"></div>
+    <div class="results-actions">
+      <button class="btn-nav primary" onclick="restartQuiz()">↺ Repetir</button>
+      <button class="btn-nav" onclick="backToModules()">← Módulos</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  BANCO DE PREGUNTAS IPE II
+// ─────────────────────────────────────────────
+const MODULES = [
+  {
+    id:'M01', label:'01', name:'Búsqueda de Empleo',
+    desc:'Europass, LinkedIn, ATS, entrevistas, selección de personal',
+    questions:[
+      { type:'tf', text:'El Pasaporte Europeo de Competencias (Europass) es una herramienta útil para presentar las habilidades y cualificaciones en Europa.', answer:true },
+      { type:'tf', text:'Las empresas modernas solo utilizan métodos tradicionales para la selección de personal.', answer:false },
+      { type:'tf', text:'Usar palabras clave en tu currículum no tiene impacto en cómo los sistemas de seguimiento de candidatos (ATS) lo clasifican.', answer:false },
+      { type:'tf', text:'Las redes sociales profesionales, como LinkedIn, no son útiles para la búsqueda de empleo.', answer:false },
+      { type:'mc', text:'¿Cuál de los siguientes es un documento clave dentro del Europass?',
+        options:['CV Europass','Red Social Europea','Pasaporte de viaje','Foro de Empleo'], answer:0 },
+      { type:'mc', text:'¿Cuál de las siguientes estrategias es útil para superar un proceso de selección?',
+        options:['Evitar hacer preguntas al entrevistador','No investigar sobre la empresa','Preparar respuestas para preguntas comunes','Llegar tarde a la entrevista'], answer:2 },
+      { type:'mc', text:'¿Qué aspecto es fundamental al evaluar la cultura de una empresa?',
+        options:['Su ubicación','La antigüedad de los empleados','La estructura salarial','Sus valores y misión'], answer:3 },
+      { type:'mc', text:'¿Cuál es la mejor estrategia antes de enviar una solicitud de empleo?',
+        options:['Inventarte un perfil con mucha experiencia','Preparar y personalizar tu currículum y carta de presentación','Improvisar','Repasar lo estudiado en el ciclo formativo'], answer:1 },
+      { type:'mc', text:'¿Qué recurso en línea es útil para desarrollar una red profesional?',
+        options:['Instagram','TikTok','LinkedIn','Facebook'], answer:2 },
+      { type:'tf', text:'Revisar la cultura de una empresa antes de aceptar una oferta de trabajo es innecesario.', answer:false },
+      { type:'tf', text:'Es importante prepararse solo para las preguntas técnicas en una entrevista de trabajo.', answer:false },
+      { type:'tf', text:'Las herramientas de inteligencia artificial solo se utilizan en la fase de entrevista del proceso de selección.', answer:false },
+      { type:'mc', text:'¿Qué ofrecen principalmente los servicios públicos de empleo (como el SEPE) a los desempleados?',
+        options:['Solo prestaciones económicas','Ninguna es correcta','Solo formación','Ayudas para desempleados, así como cursos de formación ocupacional'], answer:3 },
+      { type:'mc', text:'La evaluación de la cultura de la empresa se hace mediante:',
+        options:['Todas son correctas','Comentarios de empleados y ex-empleados','Investigación online y recursos digitales','Reconocimiento y reputación'], answer:0 },
+      { type:'mc', text:'¿Qué es LinkedIn?',
+        options:['Una red de contactos para viajeros','Una red social orientada al uso empresarial, a los negocios y al empleo','Es una red social generalista','Es una plataforma de videos cortos'], answer:1 },
+      { type:'mc', text:'¿Qué se debe considerar al seleccionar ofertas de empleo según el perfil profesional?',
+        options:['Solo el salario','La ubicación de la oficina','Las oportunidades de desarrollo y crecimiento','Los beneficios secundarios'], answer:2 },
+    ]
+  },
+  {
+    id:'M02', label:'02', name:'Habilidades Profesionales',
+    desc:'Trabajo en equipo, comunicación, gestión del tiempo, conflictos',
+    questions:[
+      { type:'mc', text:'Para una gestión eficaz del tiempo, es importante:',
+        options:['Procrastinar en las tareas menos importantes','Priorizar tareas y establecer plazos realistas','Todas son correctas','Trabajar sin descanso hasta terminar todas las tareas'], answer:1 },
+      { type:'mc', text:'¿Cuál de las siguientes competencias es más demandada en el sector productivo actual?',
+        options:['Empatía','Conocimiento técnico','Inteligencia emocional','Todas son correctas'], answer:2 },
+      { type:'mc', text:'¿Cuáles son las etapas del desarrollo de un equipo de trabajo (modelo de Tuckman)?',
+        options:['Normalización, desempeño y disolución','Ninguna de las anteriores','Formación, tormenta, normalización, desempeño y disolución','Tormenta, normalización, desempeño y disolución'], answer:2 },
+      { type:'mc', text:'¿Cómo debe ser la comunicación efectiva en un equipo?',
+        options:['Sin filtros','Breve','Ninguna de las anteriores','Clara y concisa'], answer:3 },
+      { type:'mc', text:'La empatía en un equipo de trabajo es importante porque:',
+        options:['Sumas más amigos','Ayuda a entender las perspectivas de los compañeros','Permite ignorar los problemas de los demás','Fomenta la competencia interna'], answer:1 },
+      { type:'mc', text:'Ser asertivo en el trabajo implica:',
+        options:['Imponer siempre tu opinión','Expresar tus ideas respetando a los demás','Evitar dar tu opinión'], answer:1 },
+      { type:'mc', text:'¿Cuál de las siguientes opciones NO es una técnica de resolución de conflictos?',
+        options:['Confrontación','Colaboración','Coordinación','Comunicación'], answer:0 },
+      { type:'mc', text:'¿Qué habilidad es clave para trabajar bien en equipo?',
+        options:['Escuchar activamente','Ignorar las emociones de los compañeros','Ninguna es correcta','Hablar más que los demás'], answer:0 },
+      { type:'mc', text:'¿Cuáles son las habilidades sociales necesarias para trabajar en equipo?',
+        options:['Empatía, asertividad, escucha activa, inteligencia emocional, toma de decisiones y liderazgo.','Empatía, asertividad y escucha activa y saber estar','Empatía, asertividad, escucha activa y liderazgo','Empatía, asertividad y escucha activa'], answer:0 },
+      { type:'mc', text:'¿Cuál es la mejor técnica para gestionar el tiempo eficientemente?',
+        options:['Evitar discutir sobre el conflicto','Ninguna de las anteriores','Evitar la planificación detallada','Utilizar técnicas de gestión del tiempo como la matriz de Eisenhower'], answer:3 },
+      { type:'mc', text:'¿Cuál de las siguientes acciones ayuda a liderar un equipo eficientemente?',
+        options:['Todas son correctas','Delegar tareas de manera adecuada','Aumentar el número de reuniones','Evitar cualquier tipo de descanso'], answer:1 },
+      { type:'tf', text:'Un conflicto en el equipo siempre tiene consecuencias negativas para la productividad.', answer:false },
+      { type:'tf', text:'La inteligencia emocional no tiene relevancia en el entorno laboral.', answer:false },
+      { type:'tf', text:'Escuchar activamente es una habilidad fundamental para la comunicación efectiva en el trabajo.', answer:true },
+      { type:'tf', text:'La gestión del tiempo incluye identificar y priorizar las tareas más importantes.', answer:true },
+      { type:'tf', text:'Los equipos de trabajo no necesitan etapas de desarrollo para ser eficientes.', answer:false },
+      { type:'tf', text:'La asertividad implica ignorar las opiniones de los demás para imponer las propias.', answer:false },
+    ]
+  },
+  {
+    id:'M03', label:'03', name:'Creatividad e Innovación',
+    desc:'Tipos de innovación, metodologías, Design Thinking, ODS',
+    questions:[
+      { type:'tf', text:'Una innovación exitosa siempre requiere de una idea completamente original.', answer:false },
+      { type:'tf', text:'Las metodologías para fomentar la creatividad y la innovación solo incluyen técnicas individuales, no colaborativas.', answer:false },
+      { type:'mc', text:'¿Qué tipo de trabajo es esencial para desarrollar la innovación dentro de equipos?',
+        options:['Trabajo competitivo','Trabajo aislado','Trabajo colaborativo','Trabajo directivo'], answer:2 },
+      { type:'mc', text:'Las características de la innovación son:',
+        options:['Valor agregado, viabilidad, disrupción y proceso continuo','Ninguna de las anteriores','Aplicabilidad, valor agregado, viabilidad, disrupción y proceso continuo','Aplicabilidad, valor agregado, disrupción y proceso continuo'], answer:2 },
+      { type:'mc', text:'¿Cuántos Objetivos de Desarrollo Sostenible (ODS) existen en la Agenda 2030 de la ONU?',
+        options:['17','10','50','20'], answer:0 },
+      { type:'mc', text:'¿Qué metodología se utiliza para resolver problemas de forma creativa en un período corto de tiempo?',
+        options:['Design Sprint','Outsourcing','Downsizing','Benchmarking'], answer:0 },
+      { type:'mc', text:'¿Cuáles son los beneficios del trabajo colaborativo para la innovación?',
+        options:['Fomento del pensamiento crítico y la resolución de problemas','Desarrollo de habilidades y conocimientos compartidos','Todas son correctas','Diversidad de perspectivas y conocimientos'], answer:2 },
+      { type:'mc', text:'¿Cuál de las siguientes NO es una característica del pensamiento innovador?',
+        options:['Pensamiento creativo','Resolución de problemas','Gestión del riesgo','Rigidez en la toma de decisiones'], answer:3 },
+      { type:'mc', text:'¿Qué metodología centra el proceso en el usuario para diseñar soluciones creativas?',
+        options:['Control de calidad','Six Sigma','Lean Management','Design Thinking'], answer:3 },
+      { type:'mc', text:'¿Cómo contribuye la competencia digital a la innovación?',
+        options:['Facilita el uso de herramientas tecnológicas para crear nuevas soluciones','Solo es importante en las empresas de tecnología','Es irrelevante para la innovación','Limita la capacidad de innovación al ser demasiado técnica'], answer:0 },
+      { type:'mc', text:'¿Qué tipo de innovación consiste en mejorar productos o procesos existentes de forma gradual?',
+        options:['Innovación disruptiva','Innovación incremental','Innovación sostenible','Innovación radical'], answer:1 },
+      { type:'tf', text:'El Design Thinking es solo aplicable en el sector tecnológico.', answer:false },
+      { type:'tf', text:'La creatividad científica y la creatividad grupal son tipos de creatividad reconocidos.', answer:true },
+      { type:'mc', text:'Señala cuál NO es un tipo de creatividad:',
+        options:['Científica','Grupal','Matemática','Individual'], answer:2 },
+      { type:'tf', text:'La innovación incremental implica cambios radicales que transforman completamente el mercado.', answer:false },
+      { type:'tf', text:'El trabajo colaborativo favorece la generación de ideas innovadoras.', answer:true },
+    ]
+  },
+  {
+    id:'M04', label:'04', name:'Emprendimiento',
+    desc:'Ideas emprendedoras, RSC, economía del bien común, viabilidad',
+    questions:[
+      { type:'mc', text:'El balance social de una empresa se utiliza para:',
+        options:['Planificar la expansión internacional','Calcular los impuestos a pagar','Evaluar el impacto social, ambiental y económico de la empresa','Determinar el salario de los empleados'], answer:2 },
+      { type:'mc', text:'El proceso creativo para la generación de ideas emprendedoras tiene distintas etapas:',
+        options:['Refinamiento y selección (convergencia)','Identificación del problema o necesidad','Generación de Ideas (divergencia)','Todas son correctas'], answer:3 },
+      { type:'mc', text:'El objetivo de la economía circular es:',
+        options:['Promover el uso eficiente y sostenible de los recursos','Maximizar el beneficio financiero inmediato','Reducir costos operativos a toda costa','Incrementar la producción sin considerar el impacto ambiental'], answer:0 },
+      { type:'mc', text:'La evaluación del valor de una idea emprendedora se centra en:',
+        options:['Ninguna de las anteriores','Valor económico','Rentabilidad social','Valor económico, social y cultural'], answer:3 },
+      { type:'mc', text:'La economía del bien común se centra en:',
+        options:['Reducir la participación en la comunidad','Fomentar la cooperación y el bienestar colectivo','Maximizar la producción a bajo costo','Generar ingresos exclusivamente para los accionistas'], answer:1 },
+      { type:'mc', text:'¿En qué se centra la evaluación de una idea emprendedora?',
+        options:['Su impacto social, cultural y económico','El número de empleados requeridos','La competencia existente en el mercado','Su coste de producción'], answer:0 },
+      { type:'mc', text:'¿Cuál es el objetivo del análisis de mercado?',
+        options:['Diseñar productos sin considerar las necesidades del mercado','Evaluar únicamente la tecnología disponible','Identificar oportunidades y amenazas en el mercado','Analizar el rendimiento financiero de los competidores'], answer:2 },
+      { type:'mc', text:'¿Qué significa el acrónimo DAFO?',
+        options:['Debilidades, amenazas, fiscalidad y oportunidades','Debilidades, amenazas, fortalezas y opciones','Datos, amenazas, fortalezas y oportunidades','Debilidades, amenazas, fortalezas y oportunidades'], answer:3 },
+      { type:'mc', text:'¿Qué es la validación de una idea emprendedora?',
+        options:['Una revisión de los estados financieros de la empresa','Un proceso para contratar empleados','Un proceso para determinar la viabilidad de la idea mediante pruebas y feedback','Un análisis de la competencia en el mercado'], answer:2 },
+      { type:'mc', text:'¿Por qué es importante la responsabilidad social corporativa (RSC)?',
+        options:['Reputación y confianza, sostenibilidad a largo plazo, cumplimiento normativo y atracción y retención de talento.','Ninguna de las anteriores','Es obligatorio por ley','Para ganar dinero'], answer:0 },
+      { type:'tf', text:'El análisis DAFO solo considera factores internos de la empresa.', answer:false },
+      { type:'tf', text:'La responsabilidad social corporativa es exclusiva de las grandes empresas.', answer:false },
+      { type:'tf', text:'La validación de una idea emprendedora incluye la obtención de feedback de potenciales clientes.', answer:true },
+      { type:'tf', text:'El análisis de viabilidad económica solo considera los ingresos potenciales de un negocio.', answer:false },
+      { type:'tf', text:'La economía del bien común prioriza el beneficio colectivo sobre el individual.', answer:true },
+      { type:'tf', text:'El balance social evalúa únicamente el impacto económico de la empresa.', answer:false },
+      { type:'tf', text:'La sostenibilidad empresarial incluye aspectos sociales, ambientales y económicos.', answer:true },
+      { type:'tf', text:'Una idea emprendedora es viable solo si tiene un alto potencial de ingresos económicos.', answer:false },
+    ]
+  },
+  {
+    id:'M05', label:'05', name:'Constitución y Gestión',
+    desc:'Formas jurídicas, trámites, fiscalidad, gestión administrativa',
+    questions:[
+      { type:'mc', text:'Los desempleados que desean iniciar un negocio como autónomos pueden solicitar el pago único de su prestación. Esta ayuda se conoce como:',
+        options:['Tarifa Plana para Autónomos','Capitalización del Desempleo (Pago Único)','Programas de Apoyo a la Financiación','Ninguna de las anteriores'], answer:1 },
+      { type:'mc', text:'¿Qué factor es fundamental para elegir la forma jurídica de una empresa?',
+        options:['El tamaño del local comercial','La preferencia personal del emprendedor','La moda actual','La responsabilidad legal y fiscal de los propietarios'], answer:3 },
+      { type:'tf', text:'Una empresa puede operar legalmente sin completar todos los trámites de constitución.', answer:false },
+      { type:'mc', text:'¿Cuál es uno de los primeros trámites para la constitución de una empresa?',
+        options:['Diseñar el logotipo de la empresa','Inscribir la empresa en el registro mercantil','Contratar empleados','Elaborar un plan de marketing'], answer:1 },
+      { type:'mc', text:'En la Sociedad Limitada (SL):',
+        options:['La responsabilidad de los socios es ilimitada','Los socios responden con su patrimonio presente y futuro','La responsabilidad de los socios está limitada al capital aportado','Ninguna es correcta'], answer:2 },
+      { type:'mc', text:'¿Por qué es importante el calendario fiscal para las empresas?',
+        options:['Para asegurar el cumplimiento de las obligaciones fiscales a tiempo','Para decidir cuándo abrir nuevas sucursales','Para organizar fiestas de la empresa','Para establecer el horario de trabajo de los empleados'], answer:0 },
+      { type:'mc', text:'¿Qué se incluye en la gestión contable de una empresa?',
+        options:['Todas son correctas','Creación de campañas publicitarias','Hacer el arqueo de caja','Contabilidad y fiscalidad'], answer:3 },
+      { type:'tf', text:'El análisis de viabilidad económica solo considera los ingresos potenciales de un negocio.', answer:false },
+      { type:'mc', text:'¿Qué documento es crucial para calcular las obligaciones fiscales de una empresa?',
+        options:['El diseño del sitio web','El registro de las ventas y compras','El contrato de los empleados','El contrato de alquiler del local'], answer:1 },
+      { type:'mc', text:'Modelo para darse de alta en el Censo de Empresarios, Profesionales y Retenedores, declarando el inicio de la actividad económica:',
+        options:['Modelo 036 o 037','Modelo 200','Modelo 111','Modelo 303'], answer:0 },
+      { type:'mc', text:'¿Qué tipo de asesoramiento suelen ofrecer los servicios públicos para emprendedores?',
+        options:['Asesoramiento en moda y tendencias','Asesoramiento en decoración de oficinas','Asesoramiento en actividades recreativas','Asesoramiento financiero y jurídico'], answer:3 },
+      { type:'tf', text:'Los servicios de asesoramiento en la gestión empresarial están disponibles solo en el sector privado.', answer:false },
+      { type:'mc', text:'Son herramientas clave para evaluar la salud financiera de la empresa y deben presentarse al Registro Mercantil si se trata de una sociedad:',
+        options:['Libros contables','Memoria Anual','Balance de Situación y Cuenta de Pérdidas y Ganancias','Todas son correctas'], answer:2 },
+      { type:'tf', text:'El calendario fiscal es el mismo para todas las empresas y autónomos, independientemente de su actividad.', answer:false },
+      { type:'mc', text:'¿Qué área de la gestión administrativa involucra la preparación de contratos laborales y la gestión de nóminas?',
+        options:['Gestión de Recursos Humanos','Atención al Cliente y Relaciones Comerciales','Gestión de Documentación y Correspondencia','Gestión de Compras y Proveedores'], answer:0 },
+      { type:'tf', text:'Los trámites para la constitución de una empresa son iguales en todos los países.', answer:false },
+      { type:'tf', text:'La gestión contable de una empresa no es necesaria para pequeñas empresas o autónomos.', answer:false },
+      { type:'tf', text:'El análisis de la viabilidad financiera de un negocio solo se realiza al inicio del proyecto y no se revisa posteriormente.', answer:false },
+      { type:'tf', text:'Todas las empresas tienen las mismas obligaciones fiscales independientemente de su forma jurídica.', answer:false },
+      { type:'mc', text:'El análisis de la viabilidad económica y financiera de un modelo de negocio incluye:',
+        options:['Estimación de ingresos, costes y rentabilidad','Exclusivamente la opinión de los inversores','Únicamente el plan de marketing','Solo el análisis del mercado'], answer:0 },
+    ]
+  },
+];
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let currentQuestions = [];
+let currentIndex = 0;
+let answered = false;
+let score = 0;
+let wrongs = 0;
+let wrongList = [];
+let currentModuleLabel = '';
+let lastModuleId = null;
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+function init(){
+  const grid = document.getElementById('module-grid');
+  grid.innerHTML = '';
+  MODULES.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'module-card';
+    card.onclick = () => startQuiz(m.id);
+    card.innerHTML = `
+      <div class="module-num">MÓDULO ${m.label}</div>
+      <div class="module-name">${m.name}</div>
+      <div class="module-count">${m.questions.length} preguntas</div>
+      <div class="module-count" style="margin-top:4px;font-size:0.68rem;color:var(--text-dim)">${m.desc}</div>
+      <div class="module-bar"><div class="module-bar-fill"></div></div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function shuffle(arr){ return arr.slice().sort(()=>Math.random()-0.5); }
+
+function startQuiz(moduleId){
+  lastModuleId = moduleId;
+  if(moduleId === 'ALL'){
+    currentQuestions = shuffle(MODULES.flatMap(m => m.questions));
+    currentModuleLabel = 'TODOS LOS MÓDULOS';
+  } else {
+    const m = MODULES.find(x=>x.id===moduleId);
+    currentQuestions = shuffle(m.questions);
+    currentModuleLabel = `MÓDULO ${m.label} // ${m.name.toUpperCase()}`;
+  }
+  currentIndex = 0; score = 0; wrongs = 0; wrongList = [];
+  answered = false;
+
+  document.getElementById('module-screen').style.display='none';
+  document.getElementById('results-screen').style.display='none';
+  const qs = document.getElementById('quiz-screen');
+  qs.style.display='block'; qs.style.animation='none';
+  void qs.offsetWidth; qs.style.animation='fadeIn 0.3s ease';
+
+  document.getElementById('quiz-module-tag').textContent = currentModuleLabel;
+  document.getElementById('stat-total').textContent = currentQuestions.length;
+  renderQuestion();
+}
+
+function renderQuestion(){
+  answered = false;
+  const q = currentQuestions[currentIndex];
+  const total = currentQuestions.length;
+
+  document.getElementById('stat-current').textContent = currentIndex+1;
+  document.getElementById('stat-ok').textContent = score;
+  document.getElementById('stat-ko').textContent = wrongs;
+  document.getElementById('progress-bar').style.width = ((currentIndex/total)*100)+'%';
+
+  const btn = document.getElementById('btn-next');
+  btn.textContent = currentIndex < total-1 ? 'Siguiente →' : 'Ver resultados →';
+
+  const container = document.getElementById('q-container');
+  container.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'q-card';
+
+  const typeBadge = q.type === 'tf'
+    ? `<span class="q-type-badge badge-tf">V / F</span>`
+    : `<span class="q-type-badge badge-mc">OPCIÓN MÚLTIPLE</span>`;
+
+  card.innerHTML = `
+    <div class="q-num">PREGUNTA ${currentIndex+1} DE ${total}</div>
+    ${typeBadge}
+    <div class="q-text">${q.text}</div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+  `;
+  container.appendChild(card);
+
+  const optContainer = document.getElementById('options');
+  if(q.type==='tf'){
+    [['V','Verdadero',true],['F','Falso',false]].forEach(([key,label,val])=>{
+      const btn = document.createElement('button');
+      btn.className='opt';
+      btn.innerHTML=`<span class="opt-key">${key}</span>${label}`;
+      btn.onclick=()=>selectAnswer(btn, val===q.answer, val===q.answer ? null : q.answer, q);
+      optContainer.appendChild(btn);
+    });
+  } else {
+    q.options.forEach((opt,i)=>{
+      const btn = document.createElement('button');
+      btn.className='opt';
+      const keys=['A','B','C','D','E'];
+      btn.innerHTML=`<span class="opt-key">${keys[i]}</span>${opt}`;
+      btn.onclick=()=>selectAnswer(btn, i===q.answer, i===q.answer ? null : q.answer, q);
+      optContainer.appendChild(btn);
+    });
+  }
+}
+
+function selectAnswer(clickedBtn, isCorrect, correctAnswer, q){
+  if(answered) return;
+  answered = true;
+
+  const allOpts = document.querySelectorAll('.opt');
+  allOpts.forEach(b=>b.disabled=true);
+
+  const fb = document.getElementById('feedback');
+
+  if(isCorrect){
+    clickedBtn.classList.add('correct');
+    score++;
+    fb.className='feedback ok show';
+    fb.textContent='✓ Correcto';
+  } else {
+    clickedBtn.classList.add('wrong');
+    wrongs++;
+    // highlight correct
+    if(q.type==='tf'){
+      allOpts.forEach(b=>{
+        const txt = b.querySelector('.opt-key').textContent;
+        if((q.answer===true && txt==='V')||(q.answer===false && txt==='F')){
+          b.classList.add('reveal-correct');
+        }
+      });
+      fb.className='feedback ko show';
+      fb.textContent=`✗ Incorrecto — La respuesta correcta es: ${q.answer ? 'Verdadero' : 'Falso'}`;
+    } else {
+      allOpts[correctAnswer].classList.add('reveal-correct');
+      fb.className='feedback ko show';
+      fb.textContent=`✗ Incorrecto — La respuesta correcta es: ${q.options[correctAnswer]}`;
+    }
+    wrongList.push({ q, userBtn: clickedBtn, correctAnswer });
+  }
+
+  document.getElementById('stat-ok').textContent = score;
+  document.getElementById('stat-ko').textContent = wrongs;
+}
+
+function nextQuestion(){
+  if(!answered && currentIndex < currentQuestions.length){
+    // allow skip
+  }
+  currentIndex++;
+  if(currentIndex >= currentQuestions.length){
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResults(){
+  document.getElementById('quiz-screen').style.display='none';
+  const rs = document.getElementById('results-screen');
+  rs.style.display='block';
+
+  const total = currentQuestions.length;
+  const pct = Math.round((score/total)*100);
+  document.getElementById('res-pct').textContent = pct+'%';
+  document.getElementById('res-frac').textContent = score+' de '+total+' correctas';
+  document.getElementById('res-ok').textContent = score;
+  document.getElementById('res-ko').textContent = wrongs;
+  document.getElementById('res-total').textContent = total;
+  document.getElementById('progress-bar').style.width='100%';
+
+  const rev = document.getElementById('review-container');
+  rev.innerHTML='';
+  if(wrongList.length > 0){
+    const title = document.createElement('div');
+    title.className='review-title';
+    title.textContent=`▼ Preguntas falladas (${wrongList.length})`;
+    rev.appendChild(title);
+    wrongList.forEach(({q, correctAnswer})=>{
+      const item = document.createElement('div');
+      item.className='review-item';
+      let correctText = '';
+      if(q.type==='tf'){
+        correctText = q.answer ? 'Verdadero' : 'Falso';
+      } else {
+        correctText = q.options[q.answer];
+      }
+      item.innerHTML=`
+        <div class="review-q">${q.text}</div>
+        <div class="review-row"><span class="lbl">Respuesta correcta: </span><span class="review-correct">${correctText}</span></div>
+      `;
+      rev.appendChild(item);
+    });
+  }
+}
+
+function restartQuiz(){ startQuiz(lastModuleId); }
+
+function backToModules(){
+  document.getElementById('quiz-screen').style.display='none';
+  document.getElementById('results-screen').style.display='none';
+  const ms = document.getElementById('module-screen');
+  ms.style.display='block';
+  ms.style.animation='none'; void ms.offsetWidth; ms.style.animation='fadeIn 0.3s ease';
+}
+
+init();
+</script>
+</body>
+</html>
